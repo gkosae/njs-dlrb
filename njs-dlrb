@@ -1,0 +1,32 @@
+#! /usr/bin/env ruby
+
+require 'nokogiri'
+require 'parallel'
+require 'open-uri'
+
+URL = ARGV.first
+EBOOK_REGEX = /.*\.(pdf|epub)/
+PROCS = `nproc`.to_i
+
+if !URL
+    puts "Provide a valid url"
+    exit 1
+end
+
+document = Nokogiri::HTML.parse(URI.open(URL))
+ebooks = document.css('a').map { |t| t[:href] }.grep(EBOOK_REGEX)
+result = Parallel.map(ebooks, in_processes: PROCS) do |link|
+    ret_code = system("wget \"#{link}\"")
+    [ret_code, link]
+end
+
+success = result.filter{|r| r[0] }
+failed = result.reject{|r| r[0] }
+
+puts "Downloaded #{success.size} ebook(s)"
+puts "Failed to download #{failed.size} ebook(s)"
+
+if failed.size > 0
+    puts "Failed: "
+    puts failed.map{|r| "\t#{r[1]}"}
+end
