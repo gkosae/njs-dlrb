@@ -10,13 +10,13 @@ Download ebooks from [Naija Sermons](https://naijasermons.com.ng/available-books
 - Make sure wget is installed on your system.
 - Run
 ```bash
-$ git clone https://github.com/gkosae/njs-dlrb.git
-$ cd njs-dlrb
-$ ./install.sh
+git clone https://github.com/gkosae/njs-dlrb.git
+cd njs-dlrb
+./install.sh
 ```
 - Test the installation by running
 ```
-$ njs-dlrb
+njs-dlrb
 ```
 - Output of the above command should be
 ```
@@ -25,7 +25,7 @@ Provide a valid url
 
 # Usage
 ```bash
-$ njs-dlrb [url]
+njs-dlrb [url]
 ```
 
 ## Sample
@@ -58,4 +58,4 @@ Failed to download 0 ebook(s)
 ```
 
 # Note
-Tested only on Ubuntu 20.04.
+This has been tested only on Ubuntu 20.04 with Ruby 2.7.3.
