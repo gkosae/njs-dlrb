@@ -3,19 +3,78 @@
 require 'nokogiri'
 require 'parallel'
 require 'open-uri'
+require 'optparse'
+
+options = {
+    jobs: `nproc`.to_i,
+    exts: ['pdf', 'epub'],
+    download: nil,
+    follow: nil,
+    list_only: false
+}
+
+OptionParser.new do |opt|
+  opt.on('-j', '--jobs JOBS', 'The number of download jobs to use') do |val|
+    begin
+        options[:jobs] = Integer(val)
+    rescue ArgumentError
+        puts "Non-integer value provided for jobs option. Using default."
+        options[:jobs] = `nproc`.to_i
+    end
+  end
+
+  opt.on('-e', '--exts EXTENSIONS', 'Comma separated list of extensions to download') do |val|
+    options[:exts] = val.split(',').map(&:strip)
+  end
+
+  opt.on('-d', '--download-match REGEX', "Regex to match links against. Matched links are downloaded. Has precedence over --exts") do |val|
+    options[:download] = val
+  end
+
+  opt.on('-f', '--follow-match REGEX', "Regex to match links against. Matched links are followed.") do |val|
+    options[:follow] = val
+  end
+
+  opt.on('-l', '--list-only', "Only list links to be downloaded") do |_val|
+    options[:list_only] = true
+  end
+end.parse!
 
 URL = ARGV.first
-EBOOK_REGEX = /.*\.(pdf|epub)/
-PROCS = `nproc`.to_i
 
 if !URL
     puts "Provide a valid url"
     exit 1
 end
 
+if options[:download]
+    ITEMS_REGEX = /#{options[:download]}/
+else
+    ITEMS_REGEX = /.*\.(#{options[:exts].join('|')})/
+end
+
 document = Nokogiri::HTML.parse(URI.open(URL))
-ebooks = document.css('a').map { |t| t[:href] }.grep(EBOOK_REGEX)
-result = Parallel.map(ebooks, in_processes: PROCS) do |link|
+links = document.css('a').map { |t| t[:href] }
+
+if options[:follow]
+    follow = links.grep(/#{options[:follow]}/)
+    result = Parallel.map(follow, in_processes: options[:jobs]) do |link|
+        document = Nokogiri::HTML.parse(URI.open(link))
+        lks = document.css('a').map { |t| t[:href] }
+        lks.grep(ITEMS_REGEX).uniq
+    end
+
+    links += result.flatten.uniq
+end
+
+download = links.grep(ITEMS_REGEX).uniq
+
+if options[:list_only]
+    puts download
+    exit 0
+end
+
+result = Parallel.map(download, in_processes: options[:jobs]) do |link|
     ret_code = system("wget \"#{link}\"")
     [ret_code, link]
 end
@@ -23,8 +82,8 @@ end
 success = result.filter{|r| r[0] }
 failed = result.reject{|r| r[0] }
 
-puts "Downloaded #{success.size} ebook(s)"
-puts "Failed to download #{failed.size} ebook(s)"
+puts "Downloaded #{success.size} item(s)"
+puts "Failed to download #{failed.size} item(s)"
 
 if failed.size > 0
     puts "Failed: "
