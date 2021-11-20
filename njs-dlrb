@@ -75,7 +75,7 @@ if options[:list_only]
 end
 
 result = Parallel.map(download, in_processes: options[:jobs]) do |link|
-    ret_code = system("wget \"#{link}\"")
+    ret_code = system("wget --content-disposition --trust-server-names \"#{link}\"")
     [ret_code, link]
 end
 
