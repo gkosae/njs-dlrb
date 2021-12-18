@@ -6,14 +6,25 @@ require 'open-uri'
 require 'optparse'
 
 options = {
+    preset: nil,
     jobs: `nproc`.to_i,
     exts: ['pdf', 'epub'],
     download: nil,
     follow: nil,
-    list_only: false
+    list_only: false,
+    list_presets: false,
+    list_options: false,
+}
+
+presets = {
+  'njs-audio' => { exts: ['mp3'] },
+  'impactconnect-audio' => { download: ".*(export=download|ddownload=\d+|\.mp3|masterkey=.+).*" },
+  'impactconnect' => { download: ".*export=download" },
+  'amenradio' => { exts: ['mp3'] }
 }
 
 OptionParser.new do |opt|
+  opt.banner = "Usage: njs-dlrb [options] URL"
   opt.on('-j', '--jobs JOBS', 'The number of download jobs to use') do |val|
     begin
         options[:jobs] = Integer(val)
@@ -35,10 +46,36 @@ OptionParser.new do |opt|
     options[:follow] = val
   end
 
+  opt.on('-p', '--use-preset PRESET', "Use a preset configuration") do |val|
+    options[:preset] = val.downcase
+  end
+
   opt.on('-l', '--list-only', "Only list links to be downloaded") do |_val|
     options[:list_only] = true
   end
+
+  opt.on('-q', '--list-presets', "List available presets") do |_val|
+    options[:list_presets] = true
+  end
+
+  opt.on('-z', '--list-options', "List options to be used") do |_val|
+    options[:list_options] = true
+  end
 end.parse!
+
+if options[:preset]
+  options.merge!(presets[options[:preset]])
+end
+
+if options[:list_presets]
+  puts presets.keys
+  exit 0
+end
+
+if options[:list_options]
+  puts options
+  exit 0
+end
 
 URL = ARGV.first
 

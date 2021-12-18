@@ -14,6 +14,12 @@ git clone https://github.com/gkosae/njs-dlrb.git
 cd njs-dlrb
 ./install.sh
 ```
+
+OR
+
+```
+curl https://raw.githubusercontent.com/gkosae/njs-dlrb/main/install-remote.sh | bash
+```
 - Test the installation by running
 ```
 njs-dlrb
