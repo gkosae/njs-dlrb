@@ -4,6 +4,7 @@ require 'nokogiri'
 require 'parallel'
 require 'open-uri'
 require 'optparse'
+require 'cgi'
 
 options = {
     preset: nil,
@@ -81,6 +82,7 @@ URL = ARGV.first
 
 if !URL
     puts "Provide a valid url"
+    puts "For help use 'njs-dlrb -h'"
     exit 1
 end
 
@@ -107,7 +109,8 @@ end
 download = links.grep(ITEMS_REGEX).uniq
 
 if options[:list_only]
-    puts download
+    puts download.map{|link| CGI.unescape(link) }
+    puts "#{download.size} item(s)"
     exit 0
 end
 

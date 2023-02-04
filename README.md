@@ -27,6 +27,7 @@ njs-dlrb
 - Output of the above command should be
 ```
 Provide a valid url
+For help use 'njs-dlrb -h'
 ```
 
 # Usage
